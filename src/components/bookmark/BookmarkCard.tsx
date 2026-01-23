@@ -31,13 +31,30 @@ export function BookmarkCard({ bookmark, onDelete }: BookmarkCardProps) {
     );
   };
 
+  const getAverageSpending = (level: number | null) => {
+    if (!level) return null;
+    const ranges: Record<number, string> = {
+      1: '$10-15',
+      2: '$15-30',
+      3: '$30-60',
+      4: '$60+',
+    };
+    return ranges[level] || null;
+  };
+
   const renderPriceLevel = (level: number | null) => {
     if (!level) return null;
+    const spending = getAverageSpending(level);
     return (
-      <span className="text-green-600 font-medium">
-        {'$'.repeat(level)}
-        <span className="text-gray-300">{'$'.repeat(4 - level)}</span>
-      </span>
+      <div className="flex items-center gap-1">
+        <span className="text-green-600 font-medium">
+          {'$'.repeat(level)}
+          <span className="text-gray-300">{'$'.repeat(4 - level)}</span>
+        </span>
+        {spending && (
+          <span className="text-xs text-gray-500">({spending}/person)</span>
+        )}
+      </div>
     );
   };
 

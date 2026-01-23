@@ -8,28 +8,55 @@ import type { BookmarkWithTags } from '@/types/bookmark';
 
 const DEFAULT_CENTER = { lat: 37.7749, lng: -122.4194 }; // San Francisco
 const DEFAULT_ZOOM = 12;
+const USER_LOCATION_ZOOM = 15;
 
 export function MapContainer() {
   const { user } = useAuth();
   const { data: bookmarks } = useBookmarks();
   const [selectedBookmark, setSelectedBookmark] = useState<BookmarkWithTags | null>(null);
-  const [center, setCenter] = useState(DEFAULT_CENTER);
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null);
+  const [mapZoom, setMapZoom] = useState(DEFAULT_ZOOM);
 
-  // Get user's location on mount
+  // Get user's location on mount, with fallback timeout
   useEffect(() => {
+    let resolved = false;
+
+    const fallbackTimer = setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        setMapCenter(DEFAULT_CENTER);
+      }
+    }, 3000); // Fallback to default after 3 seconds
+
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setCenter({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          });
+          if (!resolved) {
+            resolved = true;
+            clearTimeout(fallbackTimer);
+            setMapCenter({
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+            });
+            setMapZoom(USER_LOCATION_ZOOM);
+          }
         },
         () => {
-          // User denied location, use default
-        }
+          if (!resolved) {
+            resolved = true;
+            clearTimeout(fallbackTimer);
+            setMapCenter(DEFAULT_CENTER);
+          }
+        },
+        { timeout: 5000 }
       );
+    } else {
+      resolved = true;
+      clearTimeout(fallbackTimer);
+      setMapCenter(DEFAULT_CENTER);
     }
+
+    return () => clearTimeout(fallbackTimer);
   }, []);
 
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -42,11 +69,20 @@ export function MapContainer() {
     );
   }
 
+  // Wait for location to be determined before rendering map
+  if (!mapCenter) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-gray-100">
+        <p className="text-gray-500">Loading map...</p>
+      </div>
+    );
+  }
+
   return (
     <APIProvider apiKey={apiKey}>
       <Map
-        defaultCenter={center}
-        defaultZoom={DEFAULT_ZOOM}
+        defaultCenter={mapCenter}
+        defaultZoom={mapZoom}
         mapId="foodiemap-main"
         className="w-full h-full"
         gestureHandling="greedy"
