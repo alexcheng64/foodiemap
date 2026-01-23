@@ -98,21 +98,19 @@ FoodieMap is a web application that allows users to bookmark and organize restau
 
 ## 5. Data Models
 
-### 5.1 User
+### 5.1 User Profile
 ```
-User {
-  id: UUID (PK)
-  google_id: String (unique)
-  email: String (unique)
+-- Extends Supabase auth.users table
+profiles {
+  id: UUID (PK, FK -> auth.users.id)
   display_name: String
-  profile_picture_url: String (nullable)
-  google_access_token: String (encrypted)
-  google_refresh_token: String (encrypted)
-  token_expires_at: Timestamp
+  avatar_url: String (nullable)
   created_at: Timestamp
   updated_at: Timestamp
 }
 ```
+
+**Note:** User authentication data (email, Google ID, tokens) is managed by Supabase Auth in the `auth.users` table. The `profiles` table stores app-specific user data.
 
 ### 5.2 GoogleMapsListSync
 ```
@@ -184,14 +182,18 @@ BookmarkTag {
 
 ## 6. API Endpoints
 
-### 6.1 Authentication (Google OAuth)
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/auth/google` | Initiate Google OAuth flow |
-| GET | `/api/auth/google/callback` | OAuth callback handler |
-| POST | `/api/auth/refresh` | Refresh access token |
-| POST | `/api/auth/logout` | End user session |
-| GET | `/api/auth/me` | Get current user info |
+### 6.1 Authentication (Supabase Auth)
+
+Authentication is handled entirely by Supabase Auth client library. No custom API endpoints needed.
+
+| Client Method | Description |
+|---------------|-------------|
+| `supabase.auth.signInWithOAuth({ provider: 'google' })` | Initiate Google OAuth flow |
+| `supabase.auth.signOut()` | End user session |
+| `supabase.auth.getUser()` | Get current user info |
+| `supabase.auth.onAuthStateChange()` | Listen for auth state changes |
+
+**Note:** Supabase handles OAuth redirects, token refresh, and session management automatically.
 
 ### 6.2 Restaurants (Google Maps Proxy)
 | Method | Endpoint | Description |
@@ -240,38 +242,49 @@ BookmarkTag {
 - Tailwind CSS for styling
 - React Query for server state management
 - Google Maps JavaScript API
+- Supabase JavaScript Client (`@supabase/supabase-js`)
 
-**Backend:**
-- Node.js with Express or Fastify
-- TypeScript
-- PostgreSQL database
-- Prisma ORM
+**Backend (Supabase):**
+- Supabase PostgreSQL database
+- Supabase Auth (Google OAuth provider)
+- PostgREST (auto-generated REST API)
+- Supabase Edge Functions (Deno) for custom logic
+- Supabase Realtime for live updates
 
 **Authentication:**
-- Google OAuth 2.0
-- JWT tokens for session management
-- Secure storage for Google refresh tokens
+- Supabase Auth with Google OAuth provider
+- JWT tokens managed by Supabase
+- Row Level Security (RLS) for authorization
 
 **Infrastructure:**
-- Docker for containerization
-- Environment-based configuration
+- Supabase (fully managed backend)
+- Vercel or Netlify (frontend hosting)
+- GitHub Actions (CI/CD)
 
 ### 7.2 Architecture Diagram
 ```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│                 │     │                 │     │                 │
-│   React SPA     │────▶│   REST API      │────▶│   PostgreSQL    │
-│                 │     │   (Node.js)     │     │                 │
-└────────┬────────┘     └────────┬────────┘     └────────┬────────┘
-         │                       │                       │
-         │                       │              ┌────────┴────────┐
-         │                       │              │                 │
-         │                       │              │  Sync Service   │
-         │                       │              │  (Background)   │
-         │                       │              │                 │
-         │                       │              └────────┬────────┘
-         │                       │                       │
-         ▼                       ▼                       ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                         React SPA                                │
+│            (TypeScript + Supabase Client)                        │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                         SUPABASE                                 │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
+│  │   Auth      │  │  Database   │  │    Edge Functions       │  │
+│  │  (Google    │  │ (PostgreSQL │  │  • Google Maps Proxy    │  │
+│  │   OAuth)    │  │  + RLS)     │  │  • Sync Service         │  │
+│  └─────────────┘  └─────────────┘  └───────────┬─────────────┘  │
+│                                                │                 │
+│  ┌─────────────┐  ┌─────────────┐              │                 │
+│  │  Realtime   │  │   Storage   │              │                 │
+│  │ (Live sync) │  │  (Photos)   │              │                 │
+│  └─────────────┘  └─────────────┘              │                 │
+└────────────────────────────────────────────────┼─────────────────┘
+                                                 │
+                                                 ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Google Maps Platform                          │
 │  (Places API, Maps JavaScript API, OAuth 2.0, Saved Lists API)  │
@@ -485,8 +498,12 @@ Verify current API availability during implementation phase.
 | Saved List | A Google Maps list where users save places |
 | Sync | Process of keeping FoodieMap and Google Maps data consistent |
 | OAuth | Authorization protocol for Google account access |
+| Supabase | Backend-as-a-Service platform providing database, auth, and APIs |
+| RLS | Row Level Security - database-level access control in PostgreSQL |
+| Edge Functions | Serverless functions running on Supabase's edge network |
+| PostgREST | Auto-generated REST API from PostgreSQL schema |
 
 ---
 
-*Document Version: 1.0*
+*Document Version: 2.0 (Supabase)*
 *Last Updated: 2026-01-22*
