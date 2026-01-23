@@ -1,63 +1,89 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { APIProvider, Map, Marker, InfoWindow } from '@vis.gl/react-google-maps';
+import { useState, useCallback, useEffect } from 'react';
+import { APIProvider, Map, Marker, InfoWindow, useMap } from '@vis.gl/react-google-maps';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { useAuth } from '@/components/providers/AuthProvider';
 import type { BookmarkWithTags } from '@/types/bookmark';
 
+function MyLocationButton() {
+  const map = useMap();
+  const [isLocating, setIsLocating] = useState(false);
+
+  const handleClick = useCallback(() => {
+    if (!map || !navigator.geolocation) return;
+
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        map.panTo({ lat: latitude, lng: longitude });
+        map.setZoom(15);
+        setIsLocating(false);
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+        setIsLocating(false);
+        alert('Unable to get your location. Please check your browser permissions.');
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }, [map]);
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={isLocating}
+      className="absolute bottom-6 right-4 z-10 bg-white rounded-lg shadow-md p-3 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
+      title="Go to my location"
+    >
+      {isLocating ? (
+        <svg className="w-5 h-5 text-gray-600 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+        </svg>
+      ) : (
+        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      )}
+    </button>
+  );
+}
+
+function AutoZoomToLocation() {
+  const map = useMap();
+  const [hasZoomed, setHasZoomed] = useState(false);
+
+  useEffect(() => {
+    if (!map || hasZoomed || !navigator.geolocation) return;
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        map.panTo({ lat: latitude, lng: longitude });
+        map.setZoom(15);
+        setHasZoomed(true);
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+        // Silently fail - keep default location
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }, [map, hasZoomed]);
+
+  return null; // This component doesn't render anything
+}
+
 const DEFAULT_CENTER = { lat: 37.7749, lng: -122.4194 }; // San Francisco
 const DEFAULT_ZOOM = 12;
-const USER_LOCATION_ZOOM = 15;
 
 export function MapContainer() {
   const { user } = useAuth();
   const { data: bookmarks } = useBookmarks();
   const [selectedBookmark, setSelectedBookmark] = useState<BookmarkWithTags | null>(null);
-  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null);
-  const [mapZoom, setMapZoom] = useState(DEFAULT_ZOOM);
-
-  // Get user's location on mount, with fallback timeout
-  useEffect(() => {
-    let resolved = false;
-
-    const fallbackTimer = setTimeout(() => {
-      if (!resolved) {
-        resolved = true;
-        setMapCenter(DEFAULT_CENTER);
-      }
-    }, 3000); // Fallback to default after 3 seconds
-
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          if (!resolved) {
-            resolved = true;
-            clearTimeout(fallbackTimer);
-            setMapCenter({
-              lat: position.coords.latitude,
-              lng: position.coords.longitude,
-            });
-            setMapZoom(USER_LOCATION_ZOOM);
-          }
-        },
-        () => {
-          if (!resolved) {
-            resolved = true;
-            clearTimeout(fallbackTimer);
-            setMapCenter(DEFAULT_CENTER);
-          }
-        },
-        { timeout: 5000 }
-      );
-    } else {
-      resolved = true;
-      clearTimeout(fallbackTimer);
-      setMapCenter(DEFAULT_CENTER);
-    }
-
-    return () => clearTimeout(fallbackTimer);
-  }, []);
 
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
@@ -69,26 +95,17 @@ export function MapContainer() {
     );
   }
 
-  // Wait for location to be determined before rendering map
-  if (!mapCenter) {
-    return (
-      <div className="w-full h-full flex items-center justify-center bg-gray-100">
-        <p className="text-gray-500">Loading map...</p>
-      </div>
-    );
-  }
-
   return (
     <APIProvider apiKey={apiKey}>
-      <Map
-        defaultCenter={mapCenter}
-        defaultZoom={mapZoom}
-        mapId="foodiemap-main"
-        className="w-full h-full"
-        gestureHandling="greedy"
-        disableDefaultUI={false}
-      >
-        {/* User's bookmarked restaurants */}
+      <div className="relative w-full h-full">
+        <Map
+          defaultCenter={DEFAULT_CENTER}
+          defaultZoom={DEFAULT_ZOOM}
+          style={{ width: '100%', height: '100%' }}
+          gestureHandling="greedy"
+          disableDefaultUI={false}
+        >
+          {/* User's bookmarked restaurants */}
         {user &&
           bookmarks?.map((bookmark) => (
             <Marker
@@ -138,7 +155,10 @@ export function MapContainer() {
             </div>
           </InfoWindow>
         )}
-      </Map>
+          <AutoZoomToLocation />
+        </Map>
+        <MyLocationButton />
+      </div>
     </APIProvider>
   );
 }

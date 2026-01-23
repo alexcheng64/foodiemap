@@ -4,9 +4,9 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { createClient } from '@/lib/supabase/client';
 import type { Restaurant, RestaurantSearchResult, PlaceSearchParams } from '@/types/restaurant';
 
-export function useRestaurantSearch(params: PlaceSearchParams | null) {
-  const supabase = createClient();
+// Note: createClient is used by useBookmarkRestaurant below
 
+export function useRestaurantSearch(params: PlaceSearchParams | null) {
   return useQuery({
     queryKey: ['restaurant-search', params],
     queryFn: async (): Promise<RestaurantSearchResult> => {
@@ -14,12 +14,18 @@ export function useRestaurantSearch(params: PlaceSearchParams | null) {
         return { restaurants: [] };
       }
 
-      const { data, error } = await supabase.functions.invoke('google-places-search', {
-        body: params,
+      const response = await fetch('/api/places/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params),
       });
 
-      if (error) throw error;
-      return data;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Search failed');
+      }
+
+      return response.json();
     },
     enabled: !!params?.query,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -27,16 +33,17 @@ export function useRestaurantSearch(params: PlaceSearchParams | null) {
 }
 
 export function useRestaurantDetails(placeId: string | null) {
-  const supabase = createClient();
-
   return useQuery({
     queryKey: ['restaurant-details', placeId],
     queryFn: async (): Promise<Restaurant> => {
-      const { data, error } = await supabase.functions.invoke('google-places-details', {
-        body: { placeId },
-      });
+      const response = await fetch(`/api/places/details?placeId=${placeId}`);
 
-      if (error) throw error;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to get details');
+      }
+
+      const data = await response.json();
       return data.restaurant;
     },
     enabled: !!placeId,

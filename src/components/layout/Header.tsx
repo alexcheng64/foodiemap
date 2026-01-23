@@ -2,12 +2,17 @@
 
 import Link from 'next/link';
 import { useAuth } from '@/components/providers/AuthProvider';
+import { useSearchContextOptional } from '@/components/providers/SearchProvider';
 import { Button } from '@/components/ui/Button';
 import { useState } from 'react';
 
 export function Header() {
   const { user, loading, signOut } = useAuth();
+  const searchContext = useSearchContextOptional();
   const [showMenu, setShowMenu] = useState(false);
+
+  const query = searchContext?.query ?? '';
+  const searchParams = searchContext?.searchParams ?? null;
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
@@ -36,6 +41,22 @@ export function Header() {
             </svg>
             <span className="text-xl font-bold text-gray-900">FoodieMap</span>
           </Link>
+
+          {/* Active Search Indicator */}
+          {searchParams && (
+            <Link
+              href="/search"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-primary-50 text-primary-700 rounded-full text-sm hover:bg-primary-100 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <span className="max-w-[120px] truncate">&ldquo;{query}&rdquo;</span>
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          )}
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center gap-6">

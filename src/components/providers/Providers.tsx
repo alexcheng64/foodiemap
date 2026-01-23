@@ -2,11 +2,14 @@
 
 import { AuthProvider } from './AuthProvider';
 import { QueryProvider } from './QueryProvider';
+import { SearchProvider } from './SearchProvider';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryProvider>
-      <AuthProvider>{children}</AuthProvider>
+      <AuthProvider>
+        <SearchProvider>{children}</SearchProvider>
+      </AuthProvider>
     </QueryProvider>
   );
 }
