@@ -5,7 +5,23 @@ import { NextResponse } from 'next/server';
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
+  const error_param = searchParams.get('error');
+  const error_description = searchParams.get('error_description');
   const next = searchParams.get('next') ?? '/';
+
+  // Log for debugging
+  console.log('Auth callback received:', {
+    hasCode: !!code,
+    error: error_param,
+    error_description,
+    origin
+  });
+
+  // Handle OAuth error from provider
+  if (error_param) {
+    console.error('OAuth error:', error_param, error_description);
+    return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error_description || error_param)}`);
+  }
 
   if (code) {
     const cookieStore = await cookies();
@@ -18,6 +34,7 @@ export async function GET(request: Request) {
             return cookieStore.getAll();
           },
           setAll(cookiesToSet) {
+            console.log('Setting cookies:', cookiesToSet.map(c => c.name));
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
             );
@@ -26,9 +43,15 @@ export async function GET(request: Request) {
       }
     );
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
-    if (!error) {
+    console.log('Exchange result:', {
+      success: !!data.session,
+      error: error?.message,
+      userId: data.session?.user?.id
+    });
+
+    if (!error && data.session) {
       const forwardedHost = request.headers.get('x-forwarded-host');
       const isLocalEnv = process.env.NODE_ENV === 'development';
 
@@ -41,9 +64,12 @@ export async function GET(request: Request) {
         redirectUrl = `${origin}${next}`;
       }
 
+      console.log('Redirecting to:', redirectUrl);
       return NextResponse.redirect(redirectUrl);
     }
+
+    console.error('Session exchange failed:', error?.message);
   }
 
-  return NextResponse.redirect(`${origin}/auth/auth-code-error`);
+  return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`);
 }

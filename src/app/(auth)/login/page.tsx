@@ -8,6 +8,7 @@ import { Suspense } from 'react';
 function LoginContent() {
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirectTo') || '/';
+  const error = searchParams.get('error');
 
   const handleGoogleSignIn = async () => {
     const supabase = createClient();
@@ -28,6 +29,12 @@ function LoginContent() {
             Bookmark and organize your favorite restaurants
           </p>
         </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            {decodeURIComponent(error)}
+          </div>
+        )}
 
         <div className="mt-8 space-y-6">
           <div className="space-y-4">
