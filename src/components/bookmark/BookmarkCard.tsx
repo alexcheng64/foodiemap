@@ -97,17 +97,21 @@ export function BookmarkCard({ bookmark, onDelete }: BookmarkCardProps) {
             >
               {bookmark.restaurant_name}
             </Link>
-            {bookmark.visit_status !== 'not_visited' && (
-              <span
-                className={`flex-shrink-0 px-2 py-0.5 text-xs font-medium rounded-full ${
-                  bookmark.visit_status === 'visited'
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-blue-100 text-blue-700'
-                }`}
-              >
-                {bookmark.visit_status === 'visited' ? 'Visited' : 'Want to Visit'}
-              </span>
-            )}
+            <span
+              className={`flex-shrink-0 px-2 py-0.5 text-xs font-medium rounded-full ${
+                bookmark.visit_status === 'visited'
+                  ? 'bg-green-100 text-green-700'
+                  : bookmark.visit_status === 'want_to_visit'
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'bg-gray-100 text-gray-600'
+              }`}
+            >
+              {bookmark.visit_status === 'visited'
+                ? 'Visited'
+                : bookmark.visit_status === 'want_to_visit'
+                ? 'Want to Visit'
+                : 'Not Visited'}
+            </span>
           </div>
 
           <p className="text-sm text-gray-500 truncate mt-1">

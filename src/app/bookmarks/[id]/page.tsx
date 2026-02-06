@@ -86,17 +86,21 @@ export default function BookmarkDetailPage() {
                 </h1>
                 <p className="text-gray-500 mt-1">{bookmark.address}</p>
               </div>
-              {bookmark.visit_status !== 'not_visited' && (
-                <span
-                  className={`px-3 py-1 text-sm font-medium rounded-full ${
-                    bookmark.visit_status === 'visited'
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-blue-100 text-blue-700'
-                  }`}
-                >
-                  {bookmark.visit_status === 'visited' ? 'Visited' : 'Want to Visit'}
-                </span>
-              )}
+              <span
+                className={`px-3 py-1 text-sm font-medium rounded-full ${
+                  bookmark.visit_status === 'visited'
+                    ? 'bg-green-100 text-green-700'
+                    : bookmark.visit_status === 'want_to_visit'
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-gray-100 text-gray-600'
+                }`}
+              >
+                {bookmark.visit_status === 'visited'
+                  ? 'Visited'
+                  : bookmark.visit_status === 'want_to_visit'
+                  ? 'Want to Visit'
+                  : 'Not Visited'}
+              </span>
             </div>
 
             {/* Info */}
