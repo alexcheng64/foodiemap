@@ -41,16 +41,23 @@ export async function GET(request: NextRequest) {
   // Create response first, then set cookies on it
   const response = NextResponse.redirect(`${baseUrl}${next}`);
 
+  // Track cookies being set
+  const cookiesSet: string[] = [];
+
   const supabase = createServerClient(
     supabaseUrl,
     supabaseKey,
     {
       cookies: {
         getAll() {
-          return request.cookies.getAll();
+          const cookies = request.cookies.getAll();
+          console.log('Auth callback - Reading cookies:', cookies.map(c => c.name));
+          return cookies;
         },
         setAll(cookiesToSet) {
+          console.log('Auth callback - Setting cookies:', cookiesToSet.map(c => c.name));
           cookiesToSet.forEach(({ name, value, options }) => {
+            cookiesSet.push(name);
             response.cookies.set(name, value, options);
           });
         },
@@ -60,6 +67,12 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
+  console.log('Auth callback - Exchange result:', {
+    hasSession: !!data.session,
+    error: error?.message,
+    cookiesSet,
+  });
+
   if (error) {
     return NextResponse.redirect(`${baseUrl}/login?error=${encodeURIComponent(error.message)}`);
   }
@@ -67,6 +80,9 @@ export async function GET(request: NextRequest) {
   if (!data.session) {
     return NextResponse.redirect(`${baseUrl}/login?error=no_session_returned`);
   }
+
+  // Verify cookies are on response
+  console.log('Auth callback - Response cookies:', response.cookies.getAll().map(c => c.name));
 
   return response;
 }
