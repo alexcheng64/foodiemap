@@ -9,67 +9,63 @@ export async function GET(request: Request) {
   const error_description = searchParams.get('error_description');
   const next = searchParams.get('next') ?? '/';
 
-  // Log for debugging
-  console.log('Auth callback received:', {
-    hasCode: !!code,
-    error: error_param,
-    error_description,
-    origin
-  });
-
   // Handle OAuth error from provider
   if (error_param) {
-    console.error('OAuth error:', error_param, error_description);
     return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error_description || error_param)}`);
   }
 
-  if (code) {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll(cookiesToSet) {
-            console.log('Setting cookies:', cookiesToSet.map(c => c.name));
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          },
-        },
-      }
-    );
-
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-
-    console.log('Exchange result:', {
-      success: !!data.session,
-      error: error?.message,
-      userId: data.session?.user?.id
-    });
-
-    if (!error && data.session) {
-      const forwardedHost = request.headers.get('x-forwarded-host');
-      const isLocalEnv = process.env.NODE_ENV === 'development';
-
-      let redirectUrl: string;
-      if (isLocalEnv) {
-        redirectUrl = `${origin}${next}`;
-      } else if (forwardedHost) {
-        redirectUrl = `https://${forwardedHost}${next}`;
-      } else {
-        redirectUrl = `${origin}${next}`;
-      }
-
-      console.log('Redirecting to:', redirectUrl);
-      return NextResponse.redirect(redirectUrl);
-    }
-
-    console.error('Session exchange failed:', error?.message);
+  if (!code) {
+    return NextResponse.redirect(`${origin}/login?error=no_code_received`);
   }
 
-  return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`);
+  const cookieStore = await cookies();
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  // Check if env vars are set
+  if (!supabaseUrl || !supabaseKey) {
+    return NextResponse.redirect(`${origin}/login?error=missing_supabase_config`);
+  }
+
+  const supabase = createServerClient(
+    supabaseUrl,
+    supabaseKey,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
+
+  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+
+  if (error) {
+    return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error.message)}`);
+  }
+
+  if (!data.session) {
+    return NextResponse.redirect(`${origin}/login?error=no_session_returned`);
+  }
+
+  // Success - redirect to destination
+  const forwardedHost = request.headers.get('x-forwarded-host');
+  const isLocalEnv = process.env.NODE_ENV === 'development';
+
+  let redirectUrl: string;
+  if (isLocalEnv) {
+    redirectUrl = `${origin}${next}`;
+  } else if (forwardedHost) {
+    redirectUrl = `https://${forwardedHost}${next}`;
+  } else {
+    redirectUrl = `${origin}${next}`;
+  }
+
+  return NextResponse.redirect(redirectUrl);
 }
