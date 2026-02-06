@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 
+// Helper to wait (needed for Google's next_page_token)
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -14,29 +17,53 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Google Maps API key not configured' }, { status: 500 });
     }
 
-    const params = new URLSearchParams({
-      query: `${query} restaurant`,
-      key: apiKey,
-      type: 'restaurant',
-    });
+    const allResults: any[] = [];
+    let nextPageToken: string | null = null;
+    let pageCount = 0;
+    const maxPages = 3; // Google allows up to 3 pages (60 results max)
 
-    if (location) {
-      params.append('location', `${location.lat},${location.lng}`);
-      params.append('radius', radius.toString());
-    }
+    do {
+      const params = new URLSearchParams({
+        query: `${query} restaurant`,
+        key: apiKey,
+        type: 'restaurant',
+      });
 
-    const response = await fetch(
-      `https://maps.googleapis.com/maps/api/place/textsearch/json?${params}`
-    );
+      if (location) {
+        params.append('location', `${location.lat},${location.lng}`);
+        params.append('radius', radius.toString());
+      }
 
-    const data = await response.json();
+      if (nextPageToken) {
+        params.append('pagetoken', nextPageToken);
+      }
 
-    if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
-      console.error('Google Places API error:', data);
-      return NextResponse.json({ error: data.error_message || 'Search failed' }, { status: 500 });
-    }
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/place/textsearch/json?${params}`
+      );
 
-    const restaurants = (data.results || []).map((place: any) => ({
+      const data = await response.json();
+
+      if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
+        // If it's the first page, return error; otherwise return what we have
+        if (pageCount === 0) {
+          console.error('Google Places API error:', data);
+          return NextResponse.json({ error: data.error_message || 'Search failed' }, { status: 500 });
+        }
+        break;
+      }
+
+      allResults.push(...(data.results || []));
+      nextPageToken = data.next_page_token || null;
+      pageCount++;
+
+      // Google requires a short delay before using next_page_token
+      if (nextPageToken && pageCount < maxPages) {
+        await delay(2000);
+      }
+    } while (nextPageToken && pageCount < maxPages);
+
+    const restaurants = allResults.map((place: any) => ({
       place_id: place.place_id,
       name: place.name,
       formatted_address: place.formatted_address,

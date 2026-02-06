@@ -65,10 +65,13 @@ interface RestaurantSearchProps {
   onSelectRestaurant?: (placeId: string) => void;
 }
 
+const RESULTS_PER_PAGE = 10;
+
 export function RestaurantSearch({ onSelectRestaurant }: RestaurantSearchProps) {
   const { query, setQuery, searchParams, setSearchParams, sortBy, setSortBy, clearSearch } = useSearchContext();
   const [cuisine, setCuisine] = useState('');
   const [minRating, setMinRating] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const { data, isLoading, error } = useRestaurantSearch(searchParams);
 
@@ -112,6 +115,18 @@ export function RestaurantSearch({ onSelectRestaurant }: RestaurantSearchProps) 
         return restaurants;
     }
   }, [data?.restaurants, sortBy, searchParams?.location, minRating]);
+
+  // Reset page when filters change
+  const totalPages = Math.ceil(sortedRestaurants.length / RESULTS_PER_PAGE);
+  const paginatedRestaurants = sortedRestaurants.slice(
+    (currentPage - 1) * RESULTS_PER_PAGE,
+    currentPage * RESULTS_PER_PAGE
+  );
+
+  // Reset to page 1 when results change
+  useMemo(() => {
+    setCurrentPage(1);
+  }, [searchParams, minRating, sortBy]);
 
   const handleSearch = useCallback(
     (e?: React.FormEvent) => {
@@ -240,6 +255,7 @@ export function RestaurantSearch({ onSelectRestaurant }: RestaurantSearchProps) 
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-600">
               Found {sortedRestaurants.length} restaurants
+              {totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
             </p>
             <div className="flex items-center gap-2">
               <label htmlFor="sort-select" className="text-sm text-gray-600">
@@ -257,13 +273,61 @@ export function RestaurantSearch({ onSelectRestaurant }: RestaurantSearchProps) 
               </select>
             </div>
           </div>
-          {sortedRestaurants.map((restaurant) => (
+          {paginatedRestaurants.map((restaurant) => (
             <RestaurantCard
               key={restaurant.place_id}
               restaurant={restaurant}
               onClick={() => onSelectRestaurant?.(restaurant.place_id)}
             />
           ))}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-4">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1 text-sm font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter((page) => {
+                    // Show first, last, current, and nearby pages
+                    return (
+                      page === 1 ||
+                      page === totalPages ||
+                      Math.abs(page - currentPage) <= 1
+                    );
+                  })
+                  .map((page, index, arr) => (
+                    <span key={page} className="flex items-center">
+                      {index > 0 && arr[index - 1] !== page - 1 && (
+                        <span className="px-1 text-gray-400">...</span>
+                      )}
+                      <button
+                        onClick={() => setCurrentPage(page)}
+                        className={`w-8 h-8 text-sm font-medium rounded-md ${
+                          currentPage === page
+                            ? 'bg-primary-600 text-white'
+                            : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    </span>
+                  ))}
+              </div>
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 text-sm font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
       )}
 
