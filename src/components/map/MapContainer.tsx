@@ -11,7 +11,12 @@ function MyLocationButton() {
   const [isLocating, setIsLocating] = useState(false);
 
   const handleClick = useCallback(() => {
-    if (!map || !navigator.geolocation) return;
+    if (!map) return;
+
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser.');
+      return;
+    }
 
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
@@ -24,9 +29,22 @@ function MyLocationButton() {
       (error) => {
         console.error('Geolocation error:', error);
         setIsLocating(false);
-        alert('Unable to get your location. Please check your browser permissions.');
+
+        let message = 'Unable to get your location.';
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            message = 'Location permission denied. Please enable location access in your browser settings.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            message = 'Location information is unavailable.';
+            break;
+          case error.TIMEOUT:
+            message = 'Location request timed out. Please try again.';
+            break;
+        }
+        alert(message);
       },
-      { enableHighAccuracy: true, timeout: 10000 }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
     );
   }, [map]);
 
@@ -59,22 +77,44 @@ function AutoZoomToLocation() {
   useEffect(() => {
     if (!map || hasZoomed || !navigator.geolocation) return;
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        map.panTo({ lat: latitude, lng: longitude });
-        map.setZoom(15);
-        setHasZoomed(true);
-      },
-      (error) => {
-        console.error('Geolocation error:', error);
-        // Silently fail - keep default location
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
+    // Check permission first
+    navigator.permissions?.query({ name: 'geolocation' }).then((result) => {
+      if (result.state === 'denied') {
+        console.log('Geolocation permission denied');
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          map.panTo({ lat: latitude, lng: longitude });
+          map.setZoom(15);
+          setHasZoomed(true);
+        },
+        (error) => {
+          console.error('Geolocation error:', error.message);
+          // Silently fail - keep default location
+        },
+        { enableHighAccuracy: false, timeout: 15000, maximumAge: 300000 }
+      );
+    }).catch(() => {
+      // Permissions API not supported, try geolocation directly
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          map.panTo({ lat: latitude, lng: longitude });
+          map.setZoom(15);
+          setHasZoomed(true);
+        },
+        (error) => {
+          console.error('Geolocation error:', error.message);
+        },
+        { enableHighAccuracy: false, timeout: 15000, maximumAge: 300000 }
+      );
+    });
   }, [map, hasZoomed]);
 
-  return null; // This component doesn't render anything
+  return null;
 }
 
 const DEFAULT_CENTER = { lat: 37.7749, lng: -122.4194 }; // San Francisco
