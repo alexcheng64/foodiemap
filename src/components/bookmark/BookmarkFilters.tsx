@@ -15,6 +15,7 @@ export function BookmarkFilters({ filters, onChange }: BookmarkFiltersProps) {
 
   const statusOptions: { value: VisitStatus | 'all'; label: string }[] = [
     { value: 'all', label: 'All' },
+    { value: 'not_visited', label: 'Not Visited' },
     { value: 'want_to_visit', label: 'Want to Visit' },
     { value: 'visited', label: 'Visited' },
   ];
