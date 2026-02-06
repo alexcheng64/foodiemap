@@ -135,7 +135,7 @@ export function BookmarkCard({ bookmark, onDelete }: BookmarkCardProps) {
                     </svg>
                   ))}
                 </div>
-                <span className="font-medium">{bookmark.google_rating}/5</span>
+                <span className="font-medium text-gray-700">{bookmark.google_rating}/5</span>
                 {bookmark.google_rating_count && (
                   <span className="text-gray-400">
                     ({bookmark.google_rating_count.toLocaleString()})
