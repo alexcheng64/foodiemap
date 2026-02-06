@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/components/providers/AuthProvider';
 import type {
   BookmarkWithTags,
   BookmarkFilters,
@@ -13,9 +14,10 @@ const BOOKMARKS_KEY = 'bookmarks';
 
 export function useBookmarks(filters?: BookmarkFilters) {
   const supabase = createClient();
+  const { user } = useAuth();
 
   return useQuery({
-    queryKey: [BOOKMARKS_KEY, filters],
+    queryKey: [BOOKMARKS_KEY, user?.id, filters],
     queryFn: async () => {
       let query = supabase
         .from('bookmarks')
@@ -60,6 +62,7 @@ export function useBookmarks(filters?: BookmarkFilters) {
 
       return bookmarks;
     },
+    enabled: !!user,
   });
 }
 
