@@ -67,20 +67,6 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
-  // TEMPORARY DEBUG - show what's happening
-  const debugInfo = {
-    hasSession: !!data.session,
-    userId: data.session?.user?.id,
-    error: error?.message,
-    cookiesRead: request.cookies.getAll().map(c => c.name),
-    cookiesSet,
-    responseCookies: response.cookies.getAll().map(c => c.name),
-  };
-
-  // Return debug info as JSON (remove this after debugging)
-  return NextResponse.json(debugInfo);
-
-  /* UNCOMMENT AFTER DEBUGGING:
   if (error) {
     return NextResponse.redirect(`${baseUrl}/login?error=${encodeURIComponent(error.message)}`);
   }
@@ -89,6 +75,32 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${baseUrl}/login?error=no_session_returned`);
   }
 
+  // Manually set the auth cookie since exchangeCodeForSession doesn't trigger setAll
+  const projectRef = supabaseUrl.match(/https:\/\/([^.]+)\.supabase\.co/)?.[1];
+  if (projectRef && data.session) {
+    const cookieName = `sb-${projectRef}-auth-token`;
+    const cookieValue = JSON.stringify({
+      access_token: data.session.access_token,
+      refresh_token: data.session.refresh_token,
+      expires_at: Math.floor(Date.now() / 1000) + data.session.expires_in,
+      expires_in: data.session.expires_in,
+      token_type: 'bearer',
+      type: 'access',
+      user: data.session.user,
+    });
+
+    // Set the auth cookie
+    response.cookies.set(cookieName, cookieValue, {
+      path: '/',
+      sameSite: 'lax',
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: data.session.expires_in,
+    });
+
+    // Remove the code verifier cookie
+    response.cookies.delete(`sb-${projectRef}-auth-token-code-verifier`);
+  }
+
   return response;
-  */
 }
