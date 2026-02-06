@@ -49,7 +49,7 @@ export type Database = {
           photo_reference: string | null;
           personal_note: string | null;
           personal_rating: number | null;
-          visit_status: 'none' | 'want_to_visit' | 'visited';
+          visit_status: 'not_visited' | 'want_to_visit' | 'visited';
           visited_at: string | null;
           synced_to_google: boolean;
           created_at: string;
@@ -223,7 +223,7 @@ export type Database = {
       };
     };
     Enums: {
-      visit_status: 'none' | 'want_to_visit' | 'visited';
+      visit_status: 'not_visited' | 'want_to_visit' | 'visited';
       sync_direction: 'two_way' | 'to_google' | 'from_google';
       sync_status: 'idle' | 'syncing' | 'error';
     };

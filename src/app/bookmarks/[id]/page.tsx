@@ -86,7 +86,7 @@ export default function BookmarkDetailPage() {
                 </h1>
                 <p className="text-gray-500 mt-1">{bookmark.address}</p>
               </div>
-              {bookmark.visit_status !== 'none' && (
+              {bookmark.visit_status !== 'not_visited' && (
                 <span
                   className={`px-3 py-1 text-sm font-medium rounded-full ${
                     bookmark.visit_status === 'visited'

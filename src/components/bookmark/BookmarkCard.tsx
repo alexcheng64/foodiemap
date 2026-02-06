@@ -97,7 +97,7 @@ export function BookmarkCard({ bookmark, onDelete }: BookmarkCardProps) {
             >
               {bookmark.restaurant_name}
             </Link>
-            {bookmark.visit_status !== 'none' && (
+            {bookmark.visit_status !== 'not_visited' && (
               <span
                 className={`flex-shrink-0 px-2 py-0.5 text-xs font-medium rounded-full ${
                   bookmark.visit_status === 'visited'
