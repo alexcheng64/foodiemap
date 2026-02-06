@@ -65,7 +65,7 @@ interface RestaurantSearchProps {
   onSelectRestaurant?: (placeId: string) => void;
 }
 
-const RESULTS_PER_PAGE = 10;
+const RESULTS_PER_PAGE = 5;
 
 export function RestaurantSearch({ onSelectRestaurant }: RestaurantSearchProps) {
   const { query, setQuery, searchParams, setSearchParams, sortBy, setSortBy, clearSearch } = useSearchContext();
