@@ -249,7 +249,7 @@ export function RestaurantSearch({ onSelectRestaurant }: RestaurantSearchProps) 
                 id="sort-select"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortOption)}
-                className="text-sm border border-gray-300 rounded-md px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="text-sm text-gray-700 border border-gray-300 rounded-md px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               >
                 <option value="distance">Distance</option>
                 <option value="name">Name</option>
