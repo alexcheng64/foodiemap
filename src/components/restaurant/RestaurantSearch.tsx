@@ -1,12 +1,46 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { useRestaurantSearch } from '@/hooks/useRestaurantSearch';
 import { RestaurantCard } from './RestaurantCard';
 import { Spinner } from '@/components/ui/Spinner';
 import { useSearchContext, SortOption } from '@/components/providers/SearchProvider';
+
+const CUISINE_TYPES = [
+  { value: '', label: 'All Cuisines' },
+  { value: 'chinese', label: 'Chinese' },
+  { value: 'japanese', label: 'Japanese' },
+  { value: 'korean', label: 'Korean' },
+  { value: 'thai', label: 'Thai' },
+  { value: 'vietnamese', label: 'Vietnamese' },
+  { value: 'indian', label: 'Indian' },
+  { value: 'italian', label: 'Italian' },
+  { value: 'mexican', label: 'Mexican' },
+  { value: 'american', label: 'American' },
+  { value: 'french', label: 'French' },
+  { value: 'mediterranean', label: 'Mediterranean' },
+  { value: 'middle eastern', label: 'Middle Eastern' },
+  { value: 'greek', label: 'Greek' },
+  { value: 'seafood', label: 'Seafood' },
+  { value: 'steakhouse', label: 'Steakhouse' },
+  { value: 'pizza', label: 'Pizza' },
+  { value: 'sushi', label: 'Sushi' },
+  { value: 'ramen', label: 'Ramen' },
+  { value: 'burger', label: 'Burger' },
+  { value: 'cafe', label: 'Cafe' },
+  { value: 'bakery', label: 'Bakery' },
+  { value: 'dessert', label: 'Dessert' },
+];
+
+const RATING_OPTIONS = [
+  { value: 0, label: 'Any Rating' },
+  { value: 3, label: '3+ Stars' },
+  { value: 3.5, label: '3.5+ Stars' },
+  { value: 4, label: '4+ Stars' },
+  { value: 4.5, label: '4.5+ Stars' },
+];
 
 function calculateDistance(
   lat1: number,
@@ -33,15 +67,23 @@ interface RestaurantSearchProps {
 
 export function RestaurantSearch({ onSelectRestaurant }: RestaurantSearchProps) {
   const { query, setQuery, searchParams, setSearchParams, sortBy, setSortBy, clearSearch } = useSearchContext();
+  const [cuisine, setCuisine] = useState('');
+  const [minRating, setMinRating] = useState(0);
 
   const { data, isLoading, error } = useRestaurantSearch(searchParams);
 
   const sortedRestaurants = useMemo(() => {
     if (!data?.restaurants) return [];
 
-    const restaurants = [...data.restaurants];
+    // Filter by minimum rating
+    let restaurants = [...data.restaurants];
+    if (minRating > 0) {
+      restaurants = restaurants.filter((r) => (r.rating ?? 0) >= minRating);
+    }
+
     const userLocation = searchParams?.location;
 
+    // Sort
     switch (sortBy) {
       case 'distance':
         if (userLocation) {
@@ -69,19 +111,27 @@ export function RestaurantSearch({ onSelectRestaurant }: RestaurantSearchProps) 
       default:
         return restaurants;
     }
-  }, [data?.restaurants, sortBy, searchParams?.location]);
+  }, [data?.restaurants, sortBy, searchParams?.location, minRating]);
 
   const handleSearch = useCallback(
-    (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!query.trim()) return;
+    (e?: React.FormEvent) => {
+      e?.preventDefault();
+
+      // Build search query - combine text query with cuisine
+      const searchQuery = cuisine
+        ? query.trim()
+          ? `${cuisine} ${query.trim()}`
+          : `${cuisine} restaurant`
+        : query.trim();
+
+      if (!searchQuery) return;
 
       // Get user location if available
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
             setSearchParams({
-              query: query.trim(),
+              query: searchQuery,
               location: {
                 lat: position.coords.latitude,
                 lng: position.coords.longitude,
@@ -91,31 +141,73 @@ export function RestaurantSearch({ onSelectRestaurant }: RestaurantSearchProps) 
           },
           () => {
             // Location denied, search without location
-            setSearchParams({ query: query.trim() });
+            setSearchParams({ query: searchQuery });
           }
         );
       } else {
-        setSearchParams({ query: query.trim() });
+        setSearchParams({ query: searchQuery });
       }
     },
-    [query, setSearchParams]
+    [query, cuisine, setSearchParams]
   );
 
   return (
     <div className="space-y-6">
+      {/* Filters */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="cuisine-select" className="block text-sm font-medium text-gray-700 mb-1">
+            Cuisine
+          </label>
+          <select
+            id="cuisine-select"
+            value={cuisine}
+            onChange={(e) => setCuisine(e.target.value)}
+            className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          >
+            {CUISINE_TYPES.map((type) => (
+              <option key={type.value} value={type.value}>
+                {type.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="rating-filter" className="block text-sm font-medium text-gray-700 mb-1">
+            Minimum Rating
+          </label>
+          <select
+            id="rating-filter"
+            value={minRating}
+            onChange={(e) => setMinRating(Number(e.target.value))}
+            className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          >
+            {RATING_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       {/* Search Form */}
       <form onSubmit={handleSearch} className="flex gap-2">
         <div className="relative flex-1">
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search restaurants..."
+            placeholder="Search restaurants or leave empty to search by cuisine..."
             className="w-full pr-8"
           />
           {(query || searchParams) && (
             <button
               type="button"
-              onClick={clearSearch}
+              onClick={() => {
+                clearSearch();
+                setCuisine('');
+                setMinRating(0);
+              }}
               className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
               aria-label="Clear search"
             >
