@@ -1,6 +1,6 @@
 import type { Bookmark, Tag } from './database';
 
-export type VisitStatus = 'want_to_visit' | 'visited';
+export type VisitStatus = 'none' | 'want_to_visit' | 'visited';
 
 export interface BookmarkFilters {
   visitStatus?: VisitStatus | 'all';

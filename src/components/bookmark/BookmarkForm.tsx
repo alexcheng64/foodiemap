@@ -57,6 +57,17 @@ export function BookmarkForm({ bookmark, onSuccess }: BookmarkFormProps) {
         <div className="flex gap-3">
           <button
             type="button"
+            onClick={() => setVisitStatus('none')}
+            className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg border transition-colors ${
+              visitStatus === 'none'
+                ? 'bg-gray-100 border-gray-500 text-gray-700'
+                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            None
+          </button>
+          <button
+            type="button"
             onClick={() => setVisitStatus('want_to_visit')}
             className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg border transition-colors ${
               visitStatus === 'want_to_visit'
