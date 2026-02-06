@@ -67,12 +67,20 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
-  console.log('Auth callback - Exchange result:', {
+  // TEMPORARY DEBUG - show what's happening
+  const debugInfo = {
     hasSession: !!data.session,
+    userId: data.session?.user?.id,
     error: error?.message,
+    cookiesRead: request.cookies.getAll().map(c => c.name),
     cookiesSet,
-  });
+    responseCookies: response.cookies.getAll().map(c => c.name),
+  };
 
+  // Return debug info as JSON (remove this after debugging)
+  return NextResponse.json(debugInfo);
+
+  /* UNCOMMENT AFTER DEBUGGING:
   if (error) {
     return NextResponse.redirect(`${baseUrl}/login?error=${encodeURIComponent(error.message)}`);
   }
@@ -81,8 +89,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${baseUrl}/login?error=no_session_returned`);
   }
 
-  // Verify cookies are on response
-  console.log('Auth callback - Response cookies:', response.cookies.getAll().map(c => c.name));
-
   return response;
+  */
 }
