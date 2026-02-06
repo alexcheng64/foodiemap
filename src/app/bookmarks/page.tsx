@@ -3,6 +3,8 @@ import { BookmarkList } from '@/components/bookmark/BookmarkList';
 import { createServerClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'My Bookmarks - FoodieMap',
   description: 'View and manage your bookmarked restaurants',

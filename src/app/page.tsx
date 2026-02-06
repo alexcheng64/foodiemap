@@ -2,6 +2,8 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { MapContainer } from '@/components/map/MapContainer';
 import { createServerClient } from '@/lib/supabase/server';
 
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
   const supabase = await createServerClient();
   const { data: { user } } = await supabase.auth.getUser();

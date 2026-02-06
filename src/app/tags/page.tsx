@@ -3,6 +3,8 @@ import { TagList } from '@/components/tag/TagList';
 import { createServerClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Tags - FoodieMap',
   description: 'Manage your tags for organizing bookmarks',
