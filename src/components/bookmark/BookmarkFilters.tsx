@@ -42,14 +42,14 @@ export function BookmarkFilters({ filters, onChange }: BookmarkFiltersProps) {
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Status
         </label>
-        <div className="flex gap-2">
+        <div className="grid grid-cols-2 gap-2">
           {statusOptions.map((option) => (
             <button
               key={option.value}
               onClick={() =>
                 onChange({ ...filters, visitStatus: option.value })
               }
-              className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+              className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors text-center whitespace-nowrap ${
                 (filters.visitStatus || 'all') === option.value
                   ? 'bg-primary-100 text-primary-700'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
