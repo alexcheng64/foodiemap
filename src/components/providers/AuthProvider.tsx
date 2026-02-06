@@ -27,7 +27,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Get initial session
     const getInitialSession = async () => {
-      console.log('AuthProvider: Getting initial session...');
+      console.log('AuthProvider: Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+      console.log('AuthProvider: All cookies:', document.cookie);
       const {
         data: { session },
         error,
