@@ -22,7 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${inter.className} max-w-[100vw] overflow-x-hidden`}>
         <Providers>{children}</Providers>
       </body>
     </html>
