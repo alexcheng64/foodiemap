@@ -26,7 +26,7 @@ export function Card({
   return (
     <div
       className={cn(
-        'bg-white rounded-lg border border-gray-200 shadow-sm',
+        'bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden',
         paddings[padding],
         hover && 'hover:shadow-md hover:border-gray-300 transition-shadow',
         onClick && 'cursor-pointer',

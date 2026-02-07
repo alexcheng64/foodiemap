@@ -11,7 +11,7 @@ export default async function HomePage() {
   return (
     <MainLayout>
       <div className="flex flex-1 w-full h-full">
-        <div className="flex-1 relative" style={{ minHeight: 'calc(100vh - 64px)' }}>
+        <div className="flex-1 relative" style={{ minHeight: 'calc(100dvh - 64px)' }}>
           <MapContainer />
         </div>
       </div>
