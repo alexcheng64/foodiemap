@@ -66,14 +66,14 @@ export function Header() {
             >
               Map
             </Link>
-            <Link
-              href="/search"
-              className="text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              Search
-            </Link>
             {user && (
               <>
+                <Link
+                  href="/search"
+                  className="text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  Search
+                </Link>
                 <Link
                   href="/bookmarks"
                   className="text-gray-600 hover:text-gray-900 transition-colors"
