@@ -42,6 +42,51 @@ const RATING_OPTIONS = [
   { value: 4.5, label: '4.5+ Stars' },
 ];
 
+const LOCATION_OPTIONS = [
+  { value: 'vancouver', label: 'Vancouver', location: { lat: 49.2827, lng: -123.1207 } },
+  { value: 'tokyo', label: 'Tokyo', location: { lat: 35.6762, lng: 139.6503 } },
+  { value: 'hongkong', label: 'Hong Kong', location: { lat: 22.3193, lng: 114.1694 } },
+];
+
+const DISTRICT_OPTIONS: Record<string, { value: string; label: string; location: { lat: number; lng: number } }[]> = {
+  vancouver: [
+    { value: 'downtown', label: 'Downtown', location: { lat: 49.2827, lng: -123.1207 } },
+    { value: 'kitsilano', label: 'Kitsilano', location: { lat: 49.2684, lng: -123.1681 } },
+    { value: 'gastown', label: 'Gastown', location: { lat: 49.2846, lng: -123.1088 } },
+    { value: 'chinatown', label: 'Chinatown', location: { lat: 49.2797, lng: -123.1002 } },
+    { value: 'richmond', label: 'Richmond', location: { lat: 49.1666, lng: -123.1336 } },
+    { value: 'burnaby', label: 'Burnaby', location: { lat: 49.2488, lng: -122.9805 } },
+    { value: 'west-end', label: 'West End', location: { lat: 49.2869, lng: -123.1316 } },
+    { value: 'commercial-drive', label: 'Commercial Drive', location: { lat: 49.2685, lng: -123.0694 } },
+    { value: 'main-street', label: 'Main Street', location: { lat: 49.2673, lng: -123.1008 } },
+    { value: 'yaletown', label: 'Yaletown', location: { lat: 49.2741, lng: -123.1212 } },
+  ],
+  tokyo: [
+    { value: 'shibuya', label: 'Shibuya', location: { lat: 35.6580, lng: 139.7016 } },
+    { value: 'shinjuku', label: 'Shinjuku', location: { lat: 35.6938, lng: 139.7034 } },
+    { value: 'ginza', label: 'Ginza', location: { lat: 35.6722, lng: 139.7649 } },
+    { value: 'roppongi', label: 'Roppongi', location: { lat: 35.6627, lng: 139.7307 } },
+    { value: 'akihabara', label: 'Akihabara', location: { lat: 35.7023, lng: 139.7745 } },
+    { value: 'ikebukuro', label: 'Ikebukuro', location: { lat: 35.7295, lng: 139.7109 } },
+    { value: 'asakusa', label: 'Asakusa', location: { lat: 35.7148, lng: 139.7967 } },
+    { value: 'harajuku', label: 'Harajuku', location: { lat: 35.6702, lng: 139.7027 } },
+    { value: 'ueno', label: 'Ueno', location: { lat: 35.7089, lng: 139.7741 } },
+    { value: 'ebisu', label: 'Ebisu', location: { lat: 35.6468, lng: 139.7100 } },
+  ],
+  hongkong: [
+    { value: 'central', label: 'Central', location: { lat: 22.2816, lng: 114.1585 } },
+    { value: 'wan-chai', label: 'Wan Chai', location: { lat: 22.2783, lng: 114.1747 } },
+    { value: 'tsim-sha-tsui', label: 'Tsim Sha Tsui', location: { lat: 22.2988, lng: 114.1722 } },
+    { value: 'mong-kok', label: 'Mong Kok', location: { lat: 22.3193, lng: 114.1694 } },
+    { value: 'causeway-bay', label: 'Causeway Bay', location: { lat: 22.2801, lng: 114.1840 } },
+    { value: 'sham-shui-po', label: 'Sham Shui Po', location: { lat: 22.3303, lng: 114.1588 } },
+    { value: 'kennedy-town', label: 'Kennedy Town', location: { lat: 22.2819, lng: 114.1284 } },
+    { value: 'sheung-wan', label: 'Sheung Wan', location: { lat: 22.2868, lng: 114.1502 } },
+    { value: 'lan-kwai-fong', label: 'Lan Kwai Fong', location: { lat: 22.2809, lng: 114.1557 } },
+    { value: 'aberdeen', label: 'Aberdeen', location: { lat: 22.2480, lng: 114.1550 } },
+  ],
+};
+
 function calculateDistance(
   lat1: number,
   lng1: number,
@@ -69,6 +114,8 @@ const RESULTS_PER_PAGE = 5;
 
 export function RestaurantSearch({ onSelectRestaurant }: RestaurantSearchProps) {
   const { query, setQuery, searchParams, setSearchParams, sortBy, setSortBy, clearSearch } = useSearchContext();
+  const [country, setCountry] = useState('');
+  const [district, setDistrict] = useState('');
   const [cuisine, setCuisine] = useState('');
   const [minRating, setMinRating] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -132,44 +179,75 @@ export function RestaurantSearch({ onSelectRestaurant }: RestaurantSearchProps) 
     (e?: React.FormEvent) => {
       e?.preventDefault();
 
-      // Build search query - combine text query with cuisine
-      const searchQuery = cuisine
-        ? query.trim()
-          ? `${cuisine} ${query.trim()}`
-          : `${cuisine} restaurant`
-        : query.trim();
+      if (!country || !district) return;
 
-      if (!searchQuery) return;
+      const selectedDistrict = DISTRICT_OPTIONS[country]?.find((d) => d.value === district);
+      if (!selectedDistrict) return;
 
-      // Get user location if available
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            setSearchParams({
-              query: searchQuery,
-              location: {
-                lat: position.coords.latitude,
-                lng: position.coords.longitude,
-              },
-              radius: 10000, // 10km
-            });
-          },
-          () => {
-            // Location denied, search without location
-            setSearchParams({ query: searchQuery });
-          }
-        );
-      } else {
-        setSearchParams({ query: searchQuery });
+      // Build search query - combine district name, cuisine, and text query
+      let searchQuery = selectedDistrict.label;
+      if (cuisine) {
+        searchQuery += ` ${cuisine}`;
       }
+      if (query.trim()) {
+        searchQuery += ` ${query.trim()}`;
+      }
+      searchQuery += ' restaurant';
+
+      setSearchParams({
+        query: searchQuery,
+        location: selectedDistrict.location,
+        radius: 5000,
+      });
     },
-    [query, cuisine, setSearchParams]
+    [query, cuisine, country, district, setSearchParams]
   );
 
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div>
+          <label htmlFor="country-select" className="block text-sm font-medium text-gray-700 mb-1">
+            Country / City
+          </label>
+          <select
+            id="country-select"
+            value={country}
+            onChange={(e) => {
+              setCountry(e.target.value);
+              setDistrict('');
+            }}
+            className="w-full text-sm text-gray-700 border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          >
+            <option value="">All Locations</option>
+            {LOCATION_OPTIONS.map((loc) => (
+              <option key={loc.value} value={loc.value}>
+                {loc.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="district-select" className="block text-sm font-medium text-gray-700 mb-1">
+            District
+          </label>
+          <select
+            id="district-select"
+            value={district}
+            onChange={(e) => setDistrict(e.target.value)}
+            disabled={!country}
+            className="w-full text-sm text-gray-700 border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <option value="">All Districts</option>
+            {country &&
+              DISTRICT_OPTIONS[country]?.map((d) => (
+                <option key={d.value} value={d.value}>
+                  {d.label}
+                </option>
+              ))}
+          </select>
+        </div>
         <div>
           <label htmlFor="cuisine-select" className="block text-sm font-medium text-gray-700 mb-1">
             Cuisine
@@ -220,6 +298,8 @@ export function RestaurantSearch({ onSelectRestaurant }: RestaurantSearchProps) 
               type="button"
               onClick={() => {
                 clearSearch();
+                setCountry('');
+                setDistrict('');
                 setCuisine('');
                 setMinRating(0);
               }}
@@ -232,7 +312,7 @@ export function RestaurantSearch({ onSelectRestaurant }: RestaurantSearchProps) 
             </button>
           )}
         </div>
-        <Button type="submit" isLoading={isLoading}>
+        <Button type="submit" isLoading={isLoading} disabled={!country || !district}>
           Search
         </Button>
       </form>
