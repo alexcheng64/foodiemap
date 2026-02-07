@@ -351,13 +351,13 @@ export function RestaurantSearch({ onSelectRestaurant }: RestaurantSearchProps) 
 
       {sortedRestaurants.length > 0 && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm text-gray-600">
               Found {sortedRestaurants.length} restaurants
               {totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
             </p>
             <div className="flex items-center gap-2">
-              <label htmlFor="sort-select" className="text-sm text-gray-600">
+              <label htmlFor="sort-select" className="text-sm text-gray-600 whitespace-nowrap">
                 Sort by:
               </label>
               <select

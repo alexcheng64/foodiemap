@@ -64,9 +64,9 @@ export function RestaurantCard({ restaurant, onClick }: RestaurantCardProps) {
 
   return (
     <Card hover onClick={onClick} className="cursor-pointer">
-      <div className="flex gap-4">
+      <div className="flex gap-3 sm:gap-4">
         {/* Photo placeholder */}
-        <div className="flex-shrink-0 w-20 h-20 bg-gray-100 rounded-lg overflow-hidden">
+        <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-lg overflow-hidden">
           {restaurant.photos?.[0]?.photo_reference ? (
             <img
               src={`/api/places/photo?reference=${restaurant.photos[0].photo_reference}&maxwidth=200`}
