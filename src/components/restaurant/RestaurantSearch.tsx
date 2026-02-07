@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { useRestaurantSearch } from '@/hooks/useRestaurantSearch';
@@ -119,6 +119,24 @@ export function RestaurantSearch({ onSelectRestaurant }: RestaurantSearchProps) 
   const [cuisine, setCuisine] = useState('');
   const [minRating, setMinRating] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+
+  // Get user's actual location for distance sorting
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+        },
+        () => {
+          // Location denied - will fall back to district center for sorting
+        }
+      );
+    }
+  }, []);
 
   const { data, isLoading, error } = useRestaurantSearch(searchParams);
 
@@ -131,22 +149,23 @@ export function RestaurantSearch({ onSelectRestaurant }: RestaurantSearchProps) 
       restaurants = restaurants.filter((r) => (r.rating ?? 0) >= minRating);
     }
 
-    const userLocation = searchParams?.location;
+    // Use actual user location for distance sorting, fall back to district center
+    const sortLocation = userLocation ?? searchParams?.location;
 
     // Sort
     switch (sortBy) {
       case 'distance':
-        if (userLocation) {
+        if (sortLocation) {
           return restaurants.sort((a, b) => {
             const distA = calculateDistance(
-              userLocation.lat,
-              userLocation.lng,
+              sortLocation.lat,
+              sortLocation.lng,
               a.geometry.location.lat,
               a.geometry.location.lng
             );
             const distB = calculateDistance(
-              userLocation.lat,
-              userLocation.lng,
+              sortLocation.lat,
+              sortLocation.lng,
               b.geometry.location.lat,
               b.geometry.location.lng
             );
@@ -161,7 +180,7 @@ export function RestaurantSearch({ onSelectRestaurant }: RestaurantSearchProps) 
       default:
         return restaurants;
     }
-  }, [data?.restaurants, sortBy, searchParams?.location, minRating]);
+  }, [data?.restaurants, sortBy, userLocation, searchParams?.location, minRating]);
 
   // Reset page when filters change
   const totalPages = Math.ceil(sortedRestaurants.length / RESULTS_PER_PAGE);
