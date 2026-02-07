@@ -22,7 +22,7 @@ export default async function BookmarksPage() {
 
   return (
     <MainLayout>
-      <div className="flex-1 p-6">
+      <div className="flex-1 p-4 sm:p-6">
         <div className="max-w-6xl mx-auto">
           <h1 className="text-2xl font-bold text-gray-900 mb-6">My Bookmarks</h1>
           <BookmarkList />

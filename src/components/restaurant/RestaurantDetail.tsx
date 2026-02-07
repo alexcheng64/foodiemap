@@ -163,7 +163,7 @@ export function RestaurantDetail({ placeId, onClose }: RestaurantDetailProps) {
       )}
 
       {/* Actions */}
-      <div className="flex gap-3 pt-4 border-t">
+      <div className="flex flex-wrap gap-3 pt-4 border-t">
         {user ? (
           isBookmarked ? (
             <Button variant="secondary" disabled>

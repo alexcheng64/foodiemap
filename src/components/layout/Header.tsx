@@ -129,6 +129,20 @@ export function Header() {
                       </p>
                     </div>
                     <Link
+                      href="/"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 md:hidden"
+                      onClick={() => setShowMenu(false)}
+                    >
+                      Map
+                    </Link>
+                    <Link
+                      href="/search"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 md:hidden"
+                      onClick={() => setShowMenu(false)}
+                    >
+                      Search
+                    </Link>
+                    <Link
                       href="/bookmarks"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 md:hidden"
                       onClick={() => setShowMenu(false)}

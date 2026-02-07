@@ -22,7 +22,7 @@ export default async function TagsPage() {
 
   return (
     <MainLayout>
-      <div className="flex-1 p-6">
+      <div className="flex-1 p-4 sm:p-6">
         <div className="max-w-2xl mx-auto">
           <h1 className="text-2xl font-bold text-gray-900 mb-6">Tags</h1>
           <TagList />

@@ -40,7 +40,7 @@ export function Modal({
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div
           className={cn(
-            'relative w-full bg-white rounded-xl shadow-xl',
+            'relative w-full bg-white rounded-xl shadow-xl max-h-[calc(100vh-2rem)] flex flex-col',
             sizes[size]
           )}
           role="dialog"
@@ -73,7 +73,7 @@ export function Modal({
           )}
 
           {/* Content */}
-          <div className="px-6 py-4">{children}</div>
+          <div className="px-6 py-4 overflow-y-auto">{children}</div>
         </div>
       </div>
     </Fragment>

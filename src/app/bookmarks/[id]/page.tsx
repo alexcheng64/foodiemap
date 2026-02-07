@@ -54,7 +54,7 @@ export default function BookmarkDetailPage() {
 
   return (
     <MainLayout>
-      <div className="flex-1 p-6">
+      <div className="flex-1 p-4 sm:p-6">
         <div className="max-w-3xl mx-auto">
           {/* Back button */}
           <Link
@@ -168,7 +168,7 @@ export default function BookmarkDetailPage() {
             </div>
 
             {/* Contact */}
-            <div className="flex gap-4 mt-6">
+            <div className="flex flex-wrap gap-4 mt-6">
               {bookmark.phone && (
                 <a
                   href={`tel:${bookmark.phone}`}
@@ -238,7 +238,7 @@ export default function BookmarkDetailPage() {
             )}
 
             {/* Actions */}
-            <div className="flex gap-3 mt-6 pt-6 border-t">
+            <div className="flex flex-wrap gap-3 mt-6 pt-6 border-t">
               <Button onClick={() => setShowEditModal(true)}>Edit</Button>
               <Button variant="outline" onClick={() => setShowDeleteModal(true)}>
                 Delete

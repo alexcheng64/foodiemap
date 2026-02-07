@@ -118,7 +118,7 @@ export function BookmarkCard({ bookmark, onDelete }: BookmarkCardProps) {
             {bookmark.address}
           </p>
 
-          <div className="flex items-center gap-4 mt-2">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
             {bookmark.google_rating && (
               <div className="flex items-center gap-1 text-sm">
                 <div className="flex">
@@ -169,7 +169,7 @@ export function BookmarkCard({ bookmark, onDelete }: BookmarkCardProps) {
               e.preventDefault();
               onDelete();
             }}
-            className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-600 transition-opacity"
+            className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 text-gray-400 hover:text-red-600 transition-opacity"
             aria-label="Delete bookmark"
           >
             <svg

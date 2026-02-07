@@ -225,7 +225,7 @@ export function RestaurantSearch({ onSelectRestaurant }: RestaurantSearchProps) 
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <div>
           <label htmlFor="country-select" className="block text-sm font-medium text-gray-700 mb-1">
             Country / City

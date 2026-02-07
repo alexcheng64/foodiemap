@@ -101,7 +101,7 @@ export function RestaurantCard({ restaurant, onClick }: RestaurantCardProps) {
             {restaurant.formatted_address}
           </p>
 
-          <div className="flex items-center gap-4 mt-2">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
             {restaurant.rating && (
               <div className="flex items-center gap-1 text-sm">
                 <div className="flex">

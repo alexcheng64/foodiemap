@@ -54,7 +54,7 @@ export function BookmarkForm({ bookmark, onSuccess }: BookmarkFormProps) {
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Visit Status
         </label>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-2 sm:gap-3">
           <button
             type="button"
             onClick={() => setVisitStatus('not_visited')}
