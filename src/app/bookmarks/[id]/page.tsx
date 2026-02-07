@@ -54,7 +54,7 @@ export default function BookmarkDetailPage() {
 
   return (
     <MainLayout>
-      <div className="flex-1 p-4 sm:p-6">
+      <div className="flex-1 min-w-0 p-4 sm:p-6">
         <div className="max-w-3xl mx-auto">
           {/* Back button */}
           <Link

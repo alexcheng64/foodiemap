@@ -11,7 +11,7 @@ export default function SearchPage() {
 
   return (
     <MainLayout>
-      <div className="flex-1 p-4 sm:p-6">
+      <div className="flex-1 min-w-0 p-4 sm:p-6">
         <div className="max-w-3xl mx-auto">
           <h1 className="text-2xl font-bold text-gray-900 mb-6">
             Search Restaurants
